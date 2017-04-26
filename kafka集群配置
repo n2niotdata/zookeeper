@@ -1,7 +1,6 @@
 本文没有使用docker进行部署，而是采用分布式部署，重点理解zk和kafka配置要点。
 
  
-
 目标：利用kafka自带的zookeeper搭建集群。
 
 环境：
