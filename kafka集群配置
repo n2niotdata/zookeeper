@@ -1,0 +1,555 @@
+本文没有使用docker进行部署，而是采用分布式部署，重点理解zk和kafka配置要点。
+
+ 
+
+目标：利用kafka自带的zookeeper搭建集群。
+
+环境：
+
+kafka01:192.168.12.177,centos7
+
+kafka02:192.168.12.178,centos7
+
+kafka03:192.168.12.179,centos7
+
+1.准备工作：
+
+1.1安装jdk：（3主机均需要）
+
+
+[root@kafka01 ]# yum install java-1.8.0-openjdk -y 
+[root@kafka02 ]# yum install java-1.8.0-openjdk -y 
+[root@kafka03 ]# yum install java-1.8.0-openjdk -y
+1
+2
+3
+[root@kafka01 ]# yum install java-1.8.0-openjdk -y 
+[root@kafka02 ]# yum install java-1.8.0-openjdk -y 
+[root@kafka03 ]# yum install java-1.8.0-openjdk -y
+1.2添加hosts文件：（3主机均需要）
+
+
+[root@kafka01 ~]# vi /etc/hosts
+.....
+192.168.12.177  kafka01
+192.168.12.178  kafka02
+192.168.12.179  kafka03
+~
+1
+2
+3
+4
+5
+6
+[root@kafka01 ~]# vi /etc/hosts
+.....
+192.168.12.177  kafka01
+192.168.12.178  kafka02
+192.168.12.179  kafka03
+~
+2.部署集群：
+
+2.1下载最新安装包：（3主机均需要）
+
+
+[root@kafka01 ~]# wget http://apache.arvixe.com/kafka/0.9.0.0/kafka_2.11-0.9.0.0.tgz
+[root@kafka02 ~]# wget http://apache.arvixe.com/kafka/0.9.0.0/kafka_2.11-0.9.0.0.tgz
+[root@kafka03 ~]# wget http://apache.arvixe.com/kafka/0.9.0.0/kafka_2.11-0.9.0.0.tgz
+1
+2
+3
+[root@kafka01 ~]# wget http://apache.arvixe.com/kafka/0.9.0.0/kafka_2.11-0.9.0.0.tgz
+[root@kafka02 ~]# wget http://apache.arvixe.com/kafka/0.9.0.0/kafka_2.11-0.9.0.0.tgz
+[root@kafka03 ~]# wget http://apache.arvixe.com/kafka/0.9.0.0/kafka_2.11-0.9.0.0.tgz
+2.2解压：（3主机均需要）
+
+
+[root@kafka01 ~]# tar -xf kafka_2.11-0.9.0.0.tgz -C /usr/local/
+[root@kafka01 ~]# cd /usr/local/
+[root@kafka01 local]# ln -sv kafka_2.11-0.9.0.0 kafka
+‘kafka’ -> ‘kafka_2.11-0.9.0.0’
+
+同样，在另外2台主机上解压。
+1
+2
+3
+4
+5
+6
+[root@kafka01 ~]# tar -xf kafka_2.11-0.9.0.0.tgz -C /usr/local/
+[root@kafka01 ~]# cd /usr/local/
+[root@kafka01 local]# ln -sv kafka_2.11-0.9.0.0 kafka
+‘kafka’ -> ‘kafka_2.11-0.9.0.0’
+ 
+同样，在另外2台主机上解压。
+2.3修改zk配置文件：
+
+
+[root@kafka01 ]# vi /usr/local/kafka/config/zookeeper.properties
+dataDir=/data/zookeeper
+clientPort=2181
+tickTime=2000
+initLimit=20
+syncLimit=10
+server.2=192.168.12.177:2888:3888
+server.3=192.168.12.178:2888:3888
+server.4=192.168.12.179:2888:3888
+[root@kafka01 ]# mkdir -p /data/zookeeper
+[root@kafka01 ]# echo 2 > /data/zookeeper/myid
+
+[root@kafka02 ]# vi /usr/local/kafka/config/zookeeper.properties
+dataDir=/data/zookeeper
+clientPort=2181
+tickTime=2000
+initLimit=20
+syncLimit=10
+server.2=192.168.12.177:2888:3888
+server.3=192.168.12.178:2888:3888
+server.4=192.168.12.179:2888:3888
+[root@kafka02 ]# mkdir -p /data/zookeeper
+[root@kafka02 ]# echo 3 > /data/zookeeper/myid
+
+[root@kafka03 ]# vi /usr/local/kafka/config/zookeeper.properties
+dataDir=/data/zookeeper
+clientPort=2181
+tickTime=2000
+initLimit=20
+syncLimit=10
+server.2=192.168.12.177:2888:3888
+server.3=192.168.12.178:2888:3888
+server.4=192.168.12.179:2888:3888
+[root@kafka03 ]# mkdir -p /data/zookeeper
+[root@kafka03 ]# echo 4 > /data/zookeeper/myid
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+[root@kafka01 ]# vi /usr/local/kafka/config/zookeeper.properties
+dataDir=/data/zookeeper
+clientPort=2181
+tickTime=2000
+initLimit=20
+syncLimit=10
+server.2=192.168.12.177:2888:3888
+server.3=192.168.12.178:2888:3888
+server.4=192.168.12.179:2888:3888
+[root@kafka01 ]# mkdir -p /data/zookeeper
+[root@kafka01 ]# echo 2 > /data/zookeeper/myid
+ 
+[root@kafka02 ]# vi /usr/local/kafka/config/zookeeper.properties
+dataDir=/data/zookeeper
+clientPort=2181
+tickTime=2000
+initLimit=20
+syncLimit=10
+server.2=192.168.12.177:2888:3888
+server.3=192.168.12.178:2888:3888
+server.4=192.168.12.179:2888:3888
+[root@kafka02 ]# mkdir -p /data/zookeeper
+[root@kafka02 ]# echo 3 > /data/zookeeper/myid
+ 
+[root@kafka03 ]# vi /usr/local/kafka/config/zookeeper.properties
+dataDir=/data/zookeeper
+clientPort=2181
+tickTime=2000
+initLimit=20
+syncLimit=10
+server.2=192.168.12.177:2888:3888
+server.3=192.168.12.178:2888:3888
+server.4=192.168.12.179:2888:3888
+[root@kafka03 ]# mkdir -p /data/zookeeper
+[root@kafka03 ]# echo 4 > /data/zookeeper/myid
+2.4修改kafka配置文件
+
+
+[root@kafka01 ~]# grep -v ^# /usr/local/kafka/config/server.properties 
+broker.id=2
+listeners=PLAINTEXT://:9092
+port=9092
+num.network.threads=3 
+num.io.threads=8
+socket.send.buffer.bytes=102400
+socket.receive.buffer.bytes=102400
+socket.request.max.bytes=104857600
+log.dirs=/data/kafka-logs
+num.partitions=16
+num.recovery.threads.per.data.dir=1
+log.retention.hours=168
+log.segment.bytes=1073741824
+log.retention.check.interval.ms=300000
+log.cleaner.enable=fals
+zookeeper.connect=192.168.12.177:2181,192.168.12.178:2181,192.168.12.179:2181
+zookeeper.connection.timeout.ms=6000
+
+
+[root@kafka02 ~]# grep -v ^# /usr/local/kafka/config/server.properties 
+broker.id=3
+listeners=PLAINTEXT://:9092
+port=9092
+num.network.threads=3 
+num.io.threads=8
+socket.send.buffer.bytes=102400
+socket.receive.buffer.bytes=102400
+socket.request.max.bytes=104857600
+log.dirs=/data/kafka-logs
+num.partitions=16
+num.recovery.threads.per.data.dir=1
+log.retention.hours=168
+log.segment.bytes=1073741824
+log.retention.check.interval.ms=300000
+log.cleaner.enable=fals
+zookeeper.connect=192.168.12.177:2181,192.168.12.178:2181,192.168.12.179:2181
+zookeeper.connection.timeout.ms=6000
+
+
+
+[root@kafka03 ~]# grep -v ^# /usr/local/kafka/config/server.properties 
+broker.id=4
+listeners=PLAINTEXT://:9092
+port=9092
+num.network.threads=3 
+num.io.threads=8
+socket.send.buffer.bytes=102400
+socket.receive.buffer.bytes=102400
+socket.request.max.bytes=104857600
+log.dirs=/data/kafka-logs
+num.partitions=16
+num.recovery.threads.per.data.dir=1
+log.retention.hours=168
+log.segment.bytes=1073741824
+log.retention.check.interval.ms=300000
+log.cleaner.enable=fals
+zookeeper.connect=192.168.12.177:2181,192.168.12.178:2181,192.168.12.179:2181
+zookeeper.connection.timeout.ms=6000
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+[root@kafka01 ~]# grep -v ^# /usr/local/kafka/config/server.properties 
+broker.id=2
+listeners=PLAINTEXT://:9092
+port=9092
+num.network.threads=3 
+num.io.threads=8
+socket.send.buffer.bytes=102400
+socket.receive.buffer.bytes=102400
+socket.request.max.bytes=104857600
+log.dirs=/data/kafka-logs
+num.partitions=16
+num.recovery.threads.per.data.dir=1
+log.retention.hours=168
+log.segment.bytes=1073741824
+log.retention.check.interval.ms=300000
+log.cleaner.enable=fals
+zookeeper.connect=192.168.12.177:2181,192.168.12.178:2181,192.168.12.179:2181
+zookeeper.connection.timeout.ms=6000
+ 
+ 
+[root@kafka02 ~]# grep -v ^# /usr/local/kafka/config/server.properties 
+broker.id=3
+listeners=PLAINTEXT://:9092
+port=9092
+num.network.threads=3 
+num.io.threads=8
+socket.send.buffer.bytes=102400
+socket.receive.buffer.bytes=102400
+socket.request.max.bytes=104857600
+log.dirs=/data/kafka-logs
+num.partitions=16
+num.recovery.threads.per.data.dir=1
+log.retention.hours=168
+log.segment.bytes=1073741824
+log.retention.check.interval.ms=300000
+log.cleaner.enable=fals
+zookeeper.connect=192.168.12.177:2181,192.168.12.178:2181,192.168.12.179:2181
+zookeeper.connection.timeout.ms=6000
+ 
+ 
+ 
+[root@kafka03 ~]# grep -v ^# /usr/local/kafka/config/server.properties 
+broker.id=4
+listeners=PLAINTEXT://:9092
+port=9092
+num.network.threads=3 
+num.io.threads=8
+socket.send.buffer.bytes=102400
+socket.receive.buffer.bytes=102400
+socket.request.max.bytes=104857600
+log.dirs=/data/kafka-logs
+num.partitions=16
+num.recovery.threads.per.data.dir=1
+log.retention.hours=168
+log.segment.bytes=1073741824
+log.retention.check.interval.ms=300000
+log.cleaner.enable=fals
+zookeeper.connect=192.168.12.177:2181,192.168.12.178:2181,192.168.12.179:2181
+zookeeper.connection.timeout.ms=6000
+注意：broker id 每个主机必须是唯一的。
+
+2.5启动zk：依次启动
+
+
+[root@kafka01 ]# /usr/local/kafka/bin/zookeeper-server-start.sh /usr/local/kafka/config/zookeeper.properties &
+[root@kafka02 ]# /usr/local/kafka/bin/zookeeper-server-start.sh /usr/local/kafka/config/zookeeper.properties &
+[root@kafka03 ]# /usr/local/kafka/bin/zookeeper-server-start.sh /usr/local/kafka/config/zookeeper.properties &
+1
+2
+3
+[root@kafka01 ]# /usr/local/kafka/bin/zookeeper-server-start.sh /usr/local/kafka/config/zookeeper.properties &
+[root@kafka02 ]# /usr/local/kafka/bin/zookeeper-server-start.sh /usr/local/kafka/config/zookeeper.properties &
+[root@kafka03 ]# /usr/local/kafka/bin/zookeeper-server-start.sh /usr/local/kafka/config/zookeeper.properties &
+停止zk脚本：
+
+
+/usr/local/kafka/bin/zookeeper-server-stop.sh
+1
+/usr/local/kafka/bin/zookeeper-server-stop.sh
+2.6启动kafka：依次启动
+
+
+[root@kafka01 zookeeper]# nohup /usr/local/kafka/bin/kafka-server-start.sh /usr/local/kafka/config/server.properties &
+[root@kafka02 zookeeper]# nohup /usr/local/kafka/bin/kafka-server-start.sh /usr/local/kafka/config/server.properties &
+[root@kafka03 zookeeper]# nohup /usr/local/kafka/bin/kafka-server-start.sh /usr/local/kafka/config/server.properties &
+1
+2
+3
+[root@kafka01 zookeeper]# nohup /usr/local/kafka/bin/kafka-server-start.sh /usr/local/kafka/config/server.properties &
+[root@kafka02 zookeeper]# nohup /usr/local/kafka/bin/kafka-server-start.sh /usr/local/kafka/config/server.properties &
+[root@kafka03 zookeeper]# nohup /usr/local/kafka/bin/kafka-server-start.sh /usr/local/kafka/config/server.properties &
+停止kafka脚本：
+
+
+/usr/local/kafka/bin/kafka-server-stop.sh
+1
+/usr/local/kafka/bin/kafka-server-stop.sh
+2.7查看状态：
+
+
+[root@kafka01 ~]# netstat -nlpt | grep -E "2181|2888|3888|9092"
+tcp6       0      0 :::9092                 :::*                    LISTEN      2169/java           
+tcp6       0      0 :::2181                 :::*                    LISTEN      2136/java           
+tcp6       0      0 192.168.12.177:3888     :::*                    LISTEN      2136/java 
+
+[root@kafka02 ~]# netstat -nlpt | grep -E "2181|2888|3888|9092"
+tcp6       0      0 :::9092                 :::*                    LISTEN      2525/java           
+tcp6       0      0 :::2181                 :::*                    LISTEN      2482/java           
+tcp6       0      0 192.168.12.178:2888     :::*                    LISTEN      2482/java           
+tcp6       0      0 192.168.12.178:3888     :::*                    LISTEN      2482/java  
+
+[root@kafka03 ~]# netstat -nlpt | grep -E "2181|2888|3888|9092"
+tcp6       0      0 :::9092                 :::*                    LISTEN      2166/java           
+tcp6       0      0 :::2181                 :::*                    LISTEN      2133/java           
+tcp6       0      0 192.168.12.179:3888     :::*                    LISTEN      2133/java
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+[root@kafka01 ~]# netstat -nlpt | grep -E "2181|2888|3888|9092"
+tcp6       0      0 :::9092                 :::*                    LISTEN      2169/java           
+tcp6       0      0 :::2181                 :::*                    LISTEN      2136/java           
+tcp6       0      0 192.168.12.177:3888     :::*                    LISTEN      2136/java 
+ 
+[root@kafka02 ~]# netstat -nlpt | grep -E "2181|2888|3888|9092"
+tcp6       0      0 :::9092                 :::*                    LISTEN      2525/java           
+tcp6       0      0 :::2181                 :::*                    LISTEN      2482/java           
+tcp6       0      0 192.168.12.178:2888     :::*                    LISTEN      2482/java           
+tcp6       0      0 192.168.12.178:3888     :::*                    LISTEN      2482/java  
+ 
+[root@kafka03 ~]# netstat -nlpt | grep -E "2181|2888|3888|9092"
+tcp6       0      0 :::9092                 :::*                    LISTEN      2166/java           
+tcp6       0      0 :::2181                 :::*                    LISTEN      2133/java           
+tcp6       0      0 192.168.12.179:3888     :::*                    LISTEN      2133/java
+可以看到，zk的2888端口在kafka02，即为leader。
+
+3.进行测试。
+
+3.1建一个主题，test000
+
+
+[root@kafka01 ~]# [root@kafka01 ~]# /usr/local/kafka/bin/kafka-topics.sh --create --zookeeper 192.168.12.177:2181 --replication-factor 3 --partitions 1 --topic test000
+1
+[root@kafka01 ~]# [root@kafka01 ~]# /usr/local/kafka/bin/kafka-topics.sh --create --zookeeper 192.168.12.177:2181 --replication-factor 3 --partitions 1 --topic test000
+3.2查看已建主题：
+
+
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-topics.sh --list --zookeeper 192.168.12.177:2181   
+test000
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-topics.sh --list --zookeeper 192.168.12.178:2181   
+test000 
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-topics.sh --list --zookeeper 192.168.12.179:2181   
+test000
+1
+2
+3
+4
+5
+6
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-topics.sh --list --zookeeper 192.168.12.177:2181   
+test000
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-topics.sh --list --zookeeper 192.168.12.178:2181   
+test000 
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-topics.sh --list --zookeeper 192.168.12.179:2181   
+test000
+3.3查看主题详细信息：
+
+
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-topics.sh --describe --zookeeper 192.168.12.177:2181 --topic test000
+Topic:test000   PartitionCount:1        ReplicationFactor:3     Configs:
+        Topic: test000  Partition: 0    Leader: 4       Replicas: 4,3,2 Isr: 4,3,2
+
+
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-topics.sh --describe --zookeeper 192.168.12.178:2181 --topic test000
+Topic:test000   PartitionCount:1        ReplicationFactor:3     Configs:
+        Topic: test000  Partition: 0    Leader: 4       Replicas: 4,3,2 Isr: 4,3,2
+1
+2
+3
+4
+5
+6
+7
+8
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-topics.sh --describe --zookeeper 192.168.12.177:2181 --topic test000
+Topic:test000   PartitionCount:1        ReplicationFactor:3     Configs:
+        Topic: test000  Partition: 0    Leader: 4       Replicas: 4,3,2 Isr: 4,3,2
+ 
+ 
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-topics.sh --describe --zookeeper 192.168.12.178:2181 --topic test000
+Topic:test000   PartitionCount:1        ReplicationFactor:3     Configs:
+        Topic: test000  Partition: 0    Leader: 4       Replicas: 4,3,2 Isr: 4,3,2
+#主题名称：test000
+#Partition:只有一个，从0开始
+#leader ：id为4的broker
+#Replicas 副本存在于broker id为2,3,4的上面
+#Isr:活跃状态的broker
+3.4发送消息（生产者）
+
+
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-console-producer.sh --broker-list 192.168.12.177:9092 --topic test000
+
+#输入任意字符
+6666666666666666test
+1
+2
+3
+4
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-console-producer.sh --broker-list 192.168.12.177:9092 --topic test000
+ 
+#输入任意字符
+6666666666666666test
+3.5接收消息（消费者）
+
+
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-console-consumer.sh --zookeeper  192.168.12.177:2181 --topic test000 --from-beginning
+6666666666666666test
+
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-console-consumer.sh --zookeeper  192.168.12.178:2181 --topic test000 --from-beginning
+6666666666666666test
+1
+2
+3
+4
+5
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-console-consumer.sh --zookeeper  192.168.12.177:2181 --topic test000 --from-beginning
+6666666666666666test
+ 
+[root@kafka01 ~]# /usr/local/kafka/bin/kafka-console-consumer.sh --zookeeper  192.168.12.178:2181 --topic test000 --from-beginning
+6666666666666666test
+可以查看到刚输入的字符串，说明kafka集群配置成功。
