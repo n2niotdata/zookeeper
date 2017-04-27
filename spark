@@ -1,0 +1,418 @@
+CentOS7 基于Hadoop2.7 的Spark2.0集群搭建
+
+1.前提
+
+Hadoop 2.7 集群已搭建完毕,有关Hadoop集群搭建请参考:CentOS7.0下Hadoop2.7.3的集群搭建 Hadoop集群服务器列表服务器IP服务器Hostname
+
+
+192.168.56.216apollo.hadoop.com
+ 
+192.168.56.217artemis.hadoop.com
+ 
+192.168.56.218uranus.hadoop.com
+ 
+192.168.56.219ares.hadoop.com
+* 本地下载 scala-2.12.2.tgz：
+
+* 本地下载 spark-2.0.0-bin-hadoop2.7.3.tgz;
+
+ 三个节点上创建spark用户
+
+        useradd hadoop
+
+        passwd  hadoop
+        
+
+2.上传安装文件到各服务器
+
+itlocals-MacBook-Pro:~ david.tian$ scp /Users/david.tian/Downloads/scala-2.12.2.tgz dtadmin@192.168.56.216:~
+ 
+scala-2.12.2.tgz 100% 19MB 117.5MB/s 00:00
+ 
+itlocals-MacBook-Pro:~ david.tian$ scp /Users/david.tian/Downloads/scala-2.12.2.tgz dtadmin@192.168.56.217:~
+ 
+scala-2.12.2.tgz 100% 19MB 107.4MB/s 00:00
+ 
+itlocals-MacBook-Pro:~ david.tian$ scp /Users/david.tian/Downloads/scala-2.12.2.tgz dtadmin@192.168.56.218:~
+ 
+scala-2.12.2.tgz 100% 19MB 113.5MB/s 00:00
+ 
+itlocals-MacBook-Pro:~ david.tian$ scp /Users/david.tian/Downloads/scala-2.12.2.tgz dtadmin@192.168.56.219:~
+ 
+scala-2.12.2.tgz 100% 19MB 112.3MB/s 00:00
+ 
+itlocals-MacBook-Pro:~ david.tian$ scp /Users/david.tian/Documents/software/spark/spark-2.1.0-bin-hadoop2.7.tgz dtadmin@192.168.56.216:~
+ 
+spark-2.1.0-bin-hadoop2.7.tgz 100% 187MB 131.1MB/s 00:01
+
+
+3.安装配置Scala
+
+#查看scala压缩文件目录
+
+?
+1
+2
+3
+4
+5
+[root@apollo dtadmin]# ls
+ 
+hadoop-2.7.3.tar.gz scala-2.12.2.tgz
+ 
+jdk-8u77-linux-x64.rpm spark-2.1.0-bin-hadoop2.7.tgz
+#解压
+
+?
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+[root@apollo dtadmin]# tar -zxvf scala-2.12.2.tgz
+ 
+scala-2.12.2/
+ 
+scala-2.12.2/lib/
+ 
+scala-2.12.2/lib/scala-swing_2.12-2.0.0.jar
+ 
+scala-2.12.2/lib/scala-reflect.jar
+ 
+scala-2.12.2/lib/scalap-2.12.2.jar
+ 
+scala-2.12.2/lib/scala-compiler.jar
+ 
+scala-2.12.2/lib/scala-library.jar
+ 
+scala-2.12.2/lib/jline-2.14.3.jar
+ 
+scala-2.12.2/lib/scala-xml_2.12-1.0.6.jar
+ 
+scala-2.12.2/lib/scala-parser-combinators_2.12-1.0.5.jar
+ 
+scala-2.12.2/bin/
+ 
+scala-2.12.2/bin/scala
+ 
+scala-2.12.2/bin/scalac.bat
+ 
+scala-2.12.2/bin/scala.bat
+ 
+scala-2.12.2/bin/scalap
+ 
+scala-2.12.2/bin/scalap.bat
+ 
+scala-2.12.2/bin/scaladoc.bat
+ 
+scala-2.12.2/bin/fsc
+ 
+scala-2.12.2/bin/fsc.bat
+ 
+scala-2.12.2/bin/scalac
+ 
+scala-2.12.2/bin/scaladoc
+ 
+scala-2.12.2/man/
+ 
+scala-2.12.2/man/man1/
+ 
+scala-2.12.2/man/man1/scalac.1
+ 
+scala-2.12.2/man/man1/scaladoc.1
+ 
+scala-2.12.2/man/man1/fsc.1
+ 
+scala-2.12.2/man/man1/scala.1
+ 
+scala-2.12.2/man/man1/scalap.1
+ 
+scala-2.12.2/doc/
+ 
+scala-2.12.2/doc/tools/
+ 
+scala-2.12.2/doc/tools/scala.html
+ 
+scala-2.12.2/doc/tools/index.html
+ 
+scala-2.12.2/doc/tools/images/
+ 
+scala-2.12.2/doc/tools/images/scala_logo.png
+ 
+scala-2.12.2/doc/tools/images/external.gif
+ 
+scala-2.12.2/doc/tools/fsc.html
+ 
+scala-2.12.2/doc/tools/scalac.html
+ 
+scala-2.12.2/doc/tools/css/
+ 
+scala-2.12.2/doc/tools/css/style.css
+ 
+scala-2.12.2/doc/tools/scalap.html
+ 
+scala-2.12.2/doc/tools/scaladoc.html
+ 
+scala-2.12.2/doc/License.rtf
+ 
+scala-2.12.2/doc/licenses/
+ 
+scala-2.12.2/doc/licenses/bsd_asm.txt
+ 
+scala-2.12.2/doc/licenses/mit_jquery.txt
+ 
+scala-2.12.2/doc/licenses/bsd_jline.txt
+ 
+scala-2.12.2/doc/licenses/mit_sizzle.txt
+ 
+scala-2.12.2/doc/licenses/mit_tools.tooltip.txt
+ 
+scala-2.12.2/doc/licenses/apache_jansi.txt
+ 
+scala-2.12.2/doc/LICENSE.md
+ 
+scala-2.12.2/doc/README
+#查看解压后的文件
+
+[root@apollo dtadmin]# ls
+ 
+hadoop-2.7.3.tar.gz scala-2.12.2 spark-2.1.0-bin-hadoop2.7.tgz
+ 
+jdk-8u77-linux-x64.rpm scala-2.12.2.tgz
+#把解压后的文件重命名并移到目录/usr/lib/下
+
+[root@apollo dtadmin]# mv scala-2.12.2 /usr/lib/scala/
+#配置Scala的环境变量
+
+[root@apollo dtadmin]# echo export SCALA_HOME=/user/lib/scala >> /etc/profile
+ 
+[root@apollo dtadmin]# echo export 'PATH=$PATH:$SCALA_HOME/bin' >> /etc/profile
+#把scala的安装与配置复制到其它三台从机上
+
+[root@apollo dtadmin]# scp -r $SCALA_HOME artemis.hadoop.com:/usr/lib/scala/
+ 
+[root@apollo dtadmin]# scp -r $SCALA_HOME uranus.hadoop.com:/usr/lib/scala/
+ 
+[root@apollo dtadmin]# scp -r $SCALA_HOME ares.hadoop.com:/usr/lib/scala/
+ 
+[root@apollo dtadmin]# scp /etc/profile artemis.hadoop.com:/etc/profile
+ 
+[root@apollo dtadmin]# scp /etc/profile uranus.hadoop.com:/etc/profile
+ 
+[root@apollo dtadmin]# scp /etc/profile ares.hadoop.com:/etc/profile
+4.安装配置Spark
+
+#查看spark的压宿文件
+
+[root@apollo dtadmin]# ls
+ 
+hadoop-2.7.3.tar.gz scala-2.12.2.tgz
+ 
+jdk-8u77-linux-x64.rpm spark-2.1.0-bin-hadoop2.7.tgz
+#解压spark
+
+[root@apollo dtadmin]# tar -zxvf spark-2.1.0-bin-hadoop2.7.tgz
+#查看解压后的spark
+
+[root@apollo dtadmin]# ls
+ 
+hadoop-2.7.3.tar.gz spark-2.1.0-bin-hadoop2.7
+ 
+jdk-8u77-linux-x64.rpm spark-2.1.0-bin-hadoop2.7.tgz
+ 
+scala-2.12.2.tgz
+#把解压后的spar移到/home/hadoop/spark2.1/目录下并修改其属性
+
+[root@apollo dtadmin]# mv spark-2.1.0-bin-hadoop2.7 /home/hadoop/spark2.1/
+ 
+[root@apollo hadoop]# chown -R hadoop:hadoop /home/hadoop/spark2.1
+ 
+[root@apollo hadoop]# chmod -R g=rwx /home/hadoop/spark2.1/
+#设置主机Spark环境变量
+
+[root@apollo hadoop]# export SPARK_HOME=/home/hadoop/spark2.1/ >> /etc/profile
+ 
+[root@apollo hadoop]# source /etc/profile
+#把主机上的spark配置复制到三台从机上
+
+[hadoop@apollo ~]$ scp -r /home/hadoop/spark2.1 artemis.hadoop.com:/home/hadoop/
+ 
+[hadoop@apollo ~]$ scp -r /home/hadoop/spark2.1 uranus.hadoop.com:/home/hadoop/
+ 
+[hadoop@apollo ~]$ scp -r /home/hadoop/spark2.1 ares.hadoop.com:/home/hadoop/
+#设置三台从机上的spark环境变量
+
+[root@artemis hadoop]# export SPARK_HOME=/home/hadoop/spark2.1/ >> /etc/profile
+ 
+[root@artemis hadoop]# source /etc/profile
+ 
+[root@uranus hadoop]# export SPARK_HOME=/home/hadoop/spark2.1/ >> /etc/profile
+ 
+[root@uranus hadoop]# source /etc/profile
+ 
+[root@ares hadoop]# export SPARK_HOME=/home/hadoop/spark2.1/ >> /etc/profile
+ 
+[root@ares hadoop]# source /etc/profile
+5.配置Spark集群
+
+5.1.创建文件 /home/hadoop/spark2.1/conf/slaves并配置
+
+[hadoop@apollo conf]$ ls
+ 
+docker.properties.template metrics.properties.template spark-env.sh.template
+ 
+fairscheduler.xml.template slaves.template
+ 
+log4j.properties.template spark-defaults.conf.template
+#从模板slave.template创建slaves
+
+## >注释localhost这行
+
+## >添加三台从机
+
+[hadoop@apollo conf]$ cp slaves.template slaves
+ 
+[hadoop@apollo conf]$ vim slaves
+ 
+#localhost
+ 
+artemis.hadoop.com
+ 
+uranus.hadoop.com
+ 
+ares.hadoop.com
+5.2.创建文件 /home/hadoop/spark2.1/conf/spark-env.sh并配置
+
+#从模板spark-env.sh.template创建spark-env.sh
+
+[hadoop@apollo conf]$ ls
+ 
+docker.properties.template slaves.template
+ 
+fairscheduler.xml.template spark-defaults.conf.template
+ 
+log4j.properties.template spark-env.sh
+ 
+metrics.properties.template spark-env.sh.template
+ 
+slaves
+ 
+[hadoop@apollo conf]$ vim spark-env.sh
+#添加
+
+export SCALA_HOME=/usr/lib/scala
+
+[hadoop@apollo conf]$sh $HADOOP_HOME/sbin/start-all.sh
+6.启动集群
+
+6.1.启动Hadoop集群
+
+[hadoop@apollo conf]$sh $HADOOP_HOME/sbin/start-all.sh
+6.1.启动Spark集群
+
+[hadoop@apollo conf]$ sh $SPARK_HOME/sbin/start-all.sh
+6.2.验证Spark集群状态
+
+http://192.168.56.216:8080/ #spark
+
+6.3.测试Spark集群
+
+[hadoop@apollo conf]$ MASTER=spark://192.168.56.216:7077 $SPARK_HOME/bin/run-example SparkPi
