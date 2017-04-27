@@ -1,344 +1,176 @@
-http://hadoop.apache.org/docs/r2.7.3/hadoop-project-dist/hadoop-common/SingleCluster.html
+准备工作
 
-CentOS7从零开始搭建Hadoop2.7集群.。下载软件与工具包
+两台centos虚拟机：
 
-pscp.exe: 用于从本地到目标机器的文件传输
+主机	别名
+192.168.0.49	master
+192.168.0.53	node1
+两台主机用户名都为sunpeng（听说要统一） 
+首先配置master主机，配置好之后clone一份系统到node1，稍微改一下就可以，这样可以最大化保持环境一致
 
-hadoop-2.7.3.targ.gz: Hadoop 2.7 软件包
+注：如没有特别说明，则master节点和node节点配置一样
+1.装JDK
 
-JDK 1.8: Java 运行环境
+ 我的jdk目录为：/usr/Java/jdk1.8.0_101
+ 配置环境变量：输入vim /etc/profile 回车
+内容如下：
 
-准备四台安装好CentOS (选择基本服务器安装，最小安装会少这少那比较麻烦，反正我没有折腾了很久没有成功)的机器，且已经配置网络环境(链接方式选择桥接)。(只需要记住四台机器的IP地址，主机名后面设置)
+#set java environment
+JAVA_HOME=/usr/java/jdk1.8.0_101
+JRE_HOME=$JAVA_HOME/jre
+CLASS_PATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib
+PATH=$PATH:$JAVA_HOME/bin:$JRE_HOME/bin
+export JAVA_HOME JRE_HOME CLASS_PATH PATH
 
-机器1： 主机名 node， IP: 192.168.169.131
+esc键  ->  :  -> wq -> enter键）（保存并返回）
+检测是否成功，输入Java -version，出现jdk版本号说明成功。
 
-机器1： 主机名 node1， IP: 192.168.169.133
+2. 修改本地计算机名
 
-机器1： 主机名 node2， IP: 192.168.169.132
+>vim /etc/sysconfig/network 
 
-机器1： 主机名 node3， IP: 192.168.169.134
+修改内容如下：
 
-文件准备
+NETWORKING=yes
+HOSTNAME=master
 
-添加用户组与用户(选择安装在root用户下可以省略这步，建议在root用户下安装，这样其他用户可以方便访问)
+注：node1的为：
 
-groupadd hadoop
+NETWORKING=yes
+HOSTNAME=node1
 
-useradd -d /home/hadoop -g hadoop hadoop
+3.修改网络计算机名
 
-复制本机文件到目标机器
+>vim /etc/hosts
 
-pscp.exe -pw 12345678 hadoop-2.7.3.tar.gz root@192.168.169.131:/usr/local
+192.168.0.49 master
+192.168.0.53 node1
 
-pscp.exe -pw 12345678 spark-2.0.0-bin-hadoop2.7.tgz root@192.168.169.131:/usr/local
-
-解压并复制文件
-
-tar -zxvf /usr/local/jdk-8u101-linux-x64.tar.gz
-
-#重命名
-
-mv /usr/local/jdk1.8.0_101 /usr/local/jdk1.8
-
-tar -zxvf /usr/local/hadoop-2.7.3.tar.gz
-
-mv /usr/local/hadoop-2.7.3 /home/hadoop/hadoop2.7
-
-权限修改
-
-修改夹所有者
-
-chmod -R hadoop:hadoop /home/hadoop/hadoop2.7
-
-修改组执行权限
-
-chmod -R g=rwx /home/hadoop/hadoop2.7
-
-若是以root用户安装不需要1、2步骤，root的安装是文件位置如下：Java：/usr/local/jdk1.8Hadoop：/usr/local/hadoop2.7如安装在root下，以下的遇到路径的配置做相应的修改
-
-配置系统环境
-
-配置系统变量
-
-echo 'export JAVA_HOME=/usr/local/jdk1.8' >> /etc/profile
-
-echo 'export JRE_HOME=$JAVA_HOME/jre' >> /etc/profile
-
-echo 'export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar' >> /etc/profile
-
-echo 'export HADOOP_HOME=${hadoopFolder}' >> /etc/profile
-
-echo 'export PATH=$HADOOP_HOME/bin:$PATH' >> /etc/profile
-
-source /etc/profile
-
-配置主机域名
-
-hostname node #当前机器名称
-
-echo NETWORKING=yes >> /etc/sysconfig/network
-
-echo HOSTNAME=node >> /etc/sysconfig/network #当前机器名称，避免重启主机名失效
-
-echo '192.168.169.131 node' >> /etc/hosts
-
-echo '192.168.169.133 node1' >> /etc/hosts
-
-echo '192.168.169.132 node2' >> /etc/hosts
-
-echo '192.168.169.134 node3' >> /etc/hosts
-
-关闭防火墙
-
-systemctl stop firewalld.service
-
-systemctl disable firewalld.service
-
-配置Hadoop集群
-
-(一)、namenode配置如下：
-
-修改配置文件----添加Java环境
-
-sed -i 's/\${JAVA_HOME}/\/usr\/local\/jdk1.8\//' $HADOOP_HOME/etc/hadoop/hadoop-env.sh
-
-sed -i 's/# export JAVA_HOME=\/home\/y\/libexec\/jdk1.6.0\//export JAVA_HOME=\/usr\/local\/jdk1.8\//' $HADOOP_HOME/etc/hadoop/yarn-env.sh
-
-sed -i 's/# export JAVA_HOME=\/home\/y\/libexec\/jdk1.6.0\//export JAVA_HOME=\/usr\/local\/jdk1.8\//' $HADOOP_HOME/etc/hadoop/mapred-env.sh
-
-配置从节点主机名
-
-echo node1 > $HADOOP_HOME/etc/hadoop/slaves
-
-echo node2 >> $HADOOP_HOME/etc/hadoop/slaves
-
-echo node3 >> $HADOOP_HOME/etc/hadoop/slaves
-
-拷贝文件并覆盖以下文件
-
-/home/hadoop/hadoop2.7/etc/hadoop/core-site.xml
-
-fs.defaultFS
-
-hdfs://node:9000/
-
-namenode settings
-
-hadoop.tmp.dir
-
-/home/hadoop/tmp/hadoop-${user.name}
-
-temp folder
-
-hadoop.proxyuser.hadoop.hosts
-
-*
-
-hadoop.proxyuser.hadoop.groups
-
-/home/hadoop/hadoop2.7/etc/hadoop/hdfs-site.xml
-
-dfs.namenode.http-address
-
-node:50070
-
-fetch NameNode images and edits.注意主机名称
-
-dfs.namenode.secondary.http-address
-
-node1:50090
-
-fetch SecondNameNode fsimage
-
-dfs.replication
-
-3
-
-replica count
-
-dfs.namenode.name.dir
-
-file:///home/hadoop/hadoop2.7/hdfs/name
-
-namenode
-
-dfs.datanode.data.dir
-
-file:///home/hadoop/hadoop2.7/hdfs/data
-
-DataNode
-
-dfs.namenode.checkpoint.dir
-
-file:///home/hadoop/hadoop2.7/hdfs/namesecondary
-
-check point
-
-dfs.webhdfs.enabled
-
-true
-
-dfs.stream-buffer-size
-
-131072
-
-buffer
-
-dfs.namenode.checkpoint.period
-
-3600
-
-duration
-
-/home/hadoop/hadoop2.7/etc/hadoop/mapred-site.xml
-
-mapreduce.framework.name
-
-yarn
-
-mapreduce.jobtracker.address
-
-hdfs://trucy:9001
-
-mapreduce.jobhistory.address
-
-node:10020
-
-MapReduce JobHistory Server host:port, default port is 10020.
-
-mapreduce.jobhistory.webapp.address
-
-node:19888
-
-MapReduce JobHistory Server Web UI host:port, default port is 19888.
-
-/home/hadoop/hadoop2.7/etc/hadoop/yarn-site.xml
-
-yarn.resourcemanager.hostname
-
-node
-
-yarn.nodemanager.aux-services
-
-mapreduce_shuffle
-
-yarn.nodemanager.aux-services.mapreduce.shuffle.class
-
-org.apache.hadoop.mapred.ShuffleHandler
-
-yarn.resourcemanager.address
-
-node:8032
-
-yarn.resourcemanager.scheduler.address
-
-node:8030
-
-yarn.resourcemanager.resource-tracker.address
-
-node:8031
-
-yarn.resourcemanager.admin.address
-
-node:8033
-
-yarn.resourcemanager.webapp.address
-
-node:8088
-
-(二)datanode配置
-
-1、所有datanode都重复“配置Hadoop集群”前的操作
-
-2、拷贝jdk和Hadoop文件到node1、node2、node3节点与node节点相应的路径下(scp 命令，不懂得百度一大堆)
-
-3、修改slaves文件, 除了做secondnamenode节点外(这里是node1)，其他节点均清空slaves
-
-[hadoop@node ~]$>/home/hadoop/hadoop2.7/etc/hadoop/slaves
-
-配置无密码登录
-
-在所有主机上创建目录并赋予权限-----root安装此步骤省略
-
-mkdir /home/hadoop/.ssh
-
-chomod 700 /home/hadoop/.ssh
-
-在node主机上生成RSA文件
-
-ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
-
-生成并拷贝 authorized_keys文件
-
-cp /home/hadoop/.ssh/id_rsa.pub authorized_keys
-
-scp /home/hadoop/.ssh/authorized_keys node1:/home/hadoop/.ssh
-
-scp /home/hadoop/.ssh/authorized_keys node2:/home/hadoop/.ssh
-
-scp /home/hadoop/.ssh/authorized_keys node3:/home/hadoop/.ssh
-
-在所有主机上修改拥有者和权限-----root安装此步骤省略
-
-chmod 600 .ssh/authorized_keys
-
-chown -R hadoop:hadoop .ssh
-
-修改ssh 配置文件
-
-注释掉
-
-# AuthorizedKeysFile .ssh/authorized_keys
-
-重新启动ssh
-
-service sshd restart
-
-Note: 第一次连接仍然需要输入密码。
-
-启动Hadoop
-
-进入Node 主机，并切换到Hadoop账号
-
-su hadoop
-
-格式化 namenode
-
-/home/hadoop/hadoop2.7/bin/hdfs namenode -format
-
-启动 hdfs
-
-/home/hadoop/hadoop2.7/sbin/start-dfs.sh
-
-验证 hdfs 状态
-
-启动 yarn
-
-/home/hadoop/hadoop2.7/sbin/start-yarn.sh
-
-验证 yarn 状态
-默认举例
-
-创建文件夹
-
-/home/hadoop/hadoop2.7/bin/hadoop fs -mkdir -p /data/wordcount
-
-/home/hadoop/hadoop2.7/bin/hadoop fs -mkdir -p /output/
-
-上传文件
-
-hadoop fs -put /home/hadoop/hadoop2.2/etc/hadoop/*.xml /data/wordcount/
-
-hadoop fs -ls /data/wordcount
-
-执行Map-Reduce
-
-hadoop jar /home/hadoop/hadoop2.2/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.2.0.jar wordcount /data/wordcount /output/wordcount
-
-查看状态
-
-http://192.168.169.131:8088/cluster
-
-浏览结果
-
-hadoop fs -cat /output/wordcount/part-r-00000 | more
+4.修改hostname
+
+master节点为：
+
+>hostnamectl set-hostname "master"
+
+注：node1节点为： hostnamectl set-hostname “node1”
+
+5.重启
+
+>reboot
+
+6.配置hadoop配置文件
+
+hadoop/hadoop-env.sh
+>vim /hadoop/hadoop-2.7.3/etc/hadoop/hadoop-env.sh
+
+#export JAVA_HOME=${JAVA_HOME}
+export JAVA_HOME=/usr/java/jdk1.8.0_101
+
+core-site.xml
+>vim /hadoop/hadoop-2.7.3/etc/hadoop/core-site.xml
+
+<configuration>
+<property>
+    <name>fs.default.name</name>
+    <value>hdfs://master:9000</value>
+  </property>
+  <property>
+    <name>hadoop.tmp.dir</name>
+    <value>/opt/hadoop/tmp</value>
+  </property>
+  <property>
+    <name>io.sort.mb</name>
+    <value>1024</value>
+  </property>
+</configuration>
+
+hdfs-site.xml
+>vim /hadoop/hadoop-2.7.3/etc/hadoop/hdfs-site.xml
+
+<configuration>
+ <property>
+    <name>dfs.data.dir</name>
+    <value>/opt/hadoop/hdfs/data</value>
+  </property>
+  <property>
+    <name>dfs.replication</name>
+    <value>1</value>
+  </property>
+  <property>
+    <name>dfs.permissions</name>
+    <value>false</value>
+  </property>
+</configuration>
+
+
+mapred-site.xml
+>cp /hadoop/hadoop-2.7.3/etc/hadoop/mapred-site.xml.template /hadoop/hadoop-2.6.3/etc/hadoop/mapred-site.xml
+
+
+>vim /hadoop/hadoop-2.7.3/etc/hadoop/mapred-site.xml
+
+
+<configuration>
+<property> 
+    <name>mapreduce.framework.name</name> 
+    <value>yarn</value> 
+    <final>true</final> 
+</property> 
+<property> 
+    <name>mapreduce.jobtracker.http.address</name> 
+    <value>master:50030</value> 
+</property> 
+<property> 
+    <name>mapreduce.jobhistory.address</name> 
+    <value>master:10020</value> 
+</property> 
+<property> 
+    <name>mapreduce.jobhistory.webapp.address</name> 
+    <value>master:19888</value> 
+</property> 
+<property>
+    <name>mapred.job.tracker</name>
+    <value>nistest.master:9001</value>
+  </property>
+</configuration>
+
+
+yarn-site.xml
+>vim /hadoop/hadoop-2.7.3/etc/hadoop/yarn-site.xml
+
+<configuration>
+<!-- Site specific YARN configuration properties -->
+    <property> 
+         <name>yarn.resourcemanager.hostname</name> 
+         <value>master</value> 
+    </property> 
+    <property> 
+        <name>yarn.nodemanager.aux-services</name> 
+        <value>mapreduce_shuffle</value> 
+    </property> 
+    <property> 
+        <name>yarn.resourcemanager.address</name> 
+        <value>master:8032</value> 
+    </property> 
+    <property> 
+        <name>yarn.resourcemanager.scheduler.address</name> 
+        <value>master:8030</value> 
+    </property> 
+    <property> 
+        <name>yarn.resourcemanager.resource-tracker.address</name> 
+        <value>master:8031</value> 
+    </property> 
+    <property> 
+        <name>yarn.resourcemanager.admin.address</name> 
+        <value>master:8033</value> 
+    </property> 
+    <property> 
+        <name>yarn.resourcemanager.webapp.address</name> 
+        <value>master:8088</value> 
+    </property> 
+</configuration>
+
+slaves
+>vim /hadoop/hadoop-2.7.3/etc/hadoop/slaves
+
+node1
