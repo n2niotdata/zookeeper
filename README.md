@@ -9,6 +9,8 @@ http://www.cnblogs.com/dopeter/p/4612232.html  hadoop集群部署
 
 http://blog.csdn.net/jackflower/article/details/53327645  flume
 
+http://blog.csdn.net/lnho2015/article/details/51143726  storm
+
 # zookeeper
 zookeeper study
 
