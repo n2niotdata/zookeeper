@@ -3,6 +3,9 @@ http://www.linuxidc.com/Linux/2017-01/139733.htm  zookeeper集群部署
 http://www.linuxidc.com/Linux/2017-01/139734.htm  kafka集群部署
 
 http://www.cnblogs.com/zengxiaoliang/p/6478859.html  spark集群部署
+
+http://www.cnblogs.com/dopeter/p/4612232.html  hadoop集群部署
+
 # zookeeper
 zookeeper study
 
