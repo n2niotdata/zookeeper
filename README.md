@@ -7,6 +7,8 @@ http://blog.csdn.net/justinjia91/article/details/69046106  spark集群部署
 
 http://www.cnblogs.com/dopeter/p/4612232.html  hadoop集群部署
 
+http://blog.csdn.net/jackflower/article/details/53327645  flume
+
 # zookeeper
 zookeeper study
 
