@@ -1,4 +1,6 @@
-http://www.linuxidc.com/Linux/2017-01/139733.htm
+http://www.linuxidc.com/Linux/2017-01/139733.htm  zookeeper集群部署
+
+http://www.linuxidc.com/Linux/2017-01/139734.htm  kafka集群部署
 # zookeeper
 zookeeper study
 
